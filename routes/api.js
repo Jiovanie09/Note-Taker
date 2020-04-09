@@ -1,32 +1,60 @@
 const path = require('path')
 var express = require("express");
 const router = express.Router()
+const fs = require("fs");
+const { uuid } = require('uuidv4')
 
-// make a function that reads the db/db.json file
-// |> convert the string read from it to a JS object
-// |> have that method return the object
+router.route("/notes")
+    .get((req, res) => {
+        console.log('/notes.get')
+        
+        fs.readFile(path.join(__dirname, '../db/db.json'), "utf-8", (err, data) => {
+            
+            if (err) throw (err)
+            res.json(JSON.parse(data))
+        });
+    })
 
-// make a function to write the modified data to db/db.json
+    .post((req, res) => {
 
-router.get('/notes', (request, response) => {
-  
-  // perform a find on the data from db.json and return that in response.send()
-})
+        let note = req.body
+        note.id = uuid()
 
-router.post('/notes', (request, response) => {
+        fs.readFile(path.join(__dirname, '../db/db.json'), 'utf-8', (err, data) => {
+            if (err) throw (err)
+            let noteData = JSON.parse(data);
 
-  // add data from request.body to db.json
-})
+            noteData.push(note) // instead push the note object created above
+            
+            let stringNoteData = JSON.stringify(noteData)
+            
+            fs.writeFile(path.join(__dirname, '../db/db.json'), stringNoteData, 'utf-8', (err, data) => {
+                
+                if (err) throw (err);
 
-router.delete('/note', (request, response) => { 
-  // perform a find on data in db.json
-  // |> delete the record matching what was sent in request.body
-  // |> rewrite the new ly modified data to db.json
+                res.set(200).json(note); // instead send note object created above
+            });
+        });
+    });
+
+router.delete("/notes/:id", (req, res) => {
+    fs.readFile(path.join(__dirname, '../db/db.json'), 'utf-8', (err, data) => {
+        if (err) throw (err)
+        let noteData = JSON.parse(data);
+
+        noteData.splice(req.params.id, 1);
+        let stringNoteData = JSON.stringify(noteData)
+      
+        fs.writeFile(path.join(__dirname, '../db/db.json'), stringNoteData, 'utf-8', (err, data) => {
+            if (err) throw (err);
+            res.set(200).json(req.body);
+        })
+    })
 })
 
 
 module.exports = router;
 
-// for working with files look into node's fs.readFileSync and fs.writeFileSync from the 'fs' module
+
 
 
